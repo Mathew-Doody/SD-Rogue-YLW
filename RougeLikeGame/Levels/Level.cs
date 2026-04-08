@@ -1,6 +1,7 @@
 using RogueLib.Dungeon;
 using RogueLib.Engine;
 using RogueLib.Utilities;
+using SandBox01.Levels;
 using TileSet = System.Collections.Generic.HashSet<RogueLib.Utilities.Vector2>;
 
 namespace RlGameNS;
@@ -36,6 +37,8 @@ public class Level : Scene {
    protected TileSet _discovered; // tiles the player has seen
    protected TileSet _inFov;      // current fov of player
 
+    protected List<Item> _items;
+
    public Level(Player p, string map, Game game) {
       if (game == null || p == null || map == null)
          throw new ArgumentNullException("game, player, or map cannot be null");
@@ -44,13 +47,26 @@ public class Level : Scene {
       _player.Pos = new Vector2(4, 12); // random, or at stairs
       _map        = map;
       _game       = _game;
+        _items = new();
 
       initMapTileSets(map);
       updateDiscovered();
       registerCommandsWithScene();
+      spreadTheGold();
    }
 
-   protected void updateDiscovered() {
+    private void spreadTheGold()
+    {
+        var rng = new Random();
+        var howMuch = rng.Next(5, 11);
+        for (int i = 0; i < howMuch; i++)
+        {
+            var pos = _floor.ElementAt(rng.Next(0, _floor.Count));
+            _items.Add(new Gold(pos, rng.Next(100,201)));
+        }
+    }
+
+    protected void updateDiscovered() {
       _inFov = fovCalc(_player!.Pos, _senseRadius);
 
       if (_discovered is null)
@@ -107,7 +123,13 @@ public class Level : Scene {
 
 // -------------------------------------------------------------------------
 
-   private void drawItems(IRenderWindow disp) { }
+   private void drawItems(IRenderWindow disp)
+    {
+        foreach(var item in _items)
+        {
+            item.Draw(disp);
+        }
+    }
 
    private void drawEnemies(IRenderWindow disp) { }
 
@@ -126,6 +148,8 @@ public class Level : Scene {
       _tunnel = new TileSet();
       _door   = new TileSet();
       _decor  = new TileSet();
+
+
 
       foreach (var (c, p) in Vector2.Parse(map)) {
          if (c == '.') _floor.Add(p);
