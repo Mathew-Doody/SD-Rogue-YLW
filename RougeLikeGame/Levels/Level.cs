@@ -4,6 +4,7 @@ using RogueLib.Utilities;
 using SandBox01.Levels;
 using TileSet = System.Collections.Generic.HashSet<RogueLib.Utilities.Vector2>;
 
+
 namespace RlGameNS;
 
 // -----------------------------------------------------------------------
@@ -38,22 +39,26 @@ public class Level : Scene {
    protected TileSet _inFov;      // current fov of player
 
     protected List<Item> _items;
+    protected List<Enemy> _enemies;
 
-   public Level(Player p, string map, Game game) {
+    public Level(Rogue p, string map, Game game) { 
       if (game == null || p == null || map == null)
          throw new ArgumentNullException("game, player, or map cannot be null");
 
       _player     = p;
       _player.Pos = new Vector2(4, 12); // random, or at stairs
       _map        = map;
-      _game       = _game;
-        _items = new();
+      _game       = game;
+      _items      = new();
+      _enemies    = new();
+        
 
       initMapTileSets(map);
       updateDiscovered();
       registerCommandsWithScene();
       spreadTheGold();
-   }
+      spawnEnemies();
+    }
 
     private void spreadTheGold()
     {
@@ -78,15 +83,26 @@ public class Level : Scene {
    protected TileSet fovCalc(Vector2 pos, int sens)
       => Vector2.getAllTiles().Where(t => (pos - t).RookLength < sens).ToHashSet();
 
-   // -----------------------------------------------------------------------
-   public override void Update() {
-      _player!.Update();
-      // foreach item update
-      // foreach NPC update 
-      // check for player death -- on death build RIP message
-   }
+    // -----------------------------------------------------------------------
 
-   public override void Draw(IRenderWindow? disp) {
+    public override void Update()
+    {
+        _player!.Update();
+
+        if (_player.Health <= 0)
+        {
+            Console.Clear();
+            Console.WriteLine("RIP - You have died.");
+            Console.ReadKey();                                      // pause so player can see RIP message
+            QuitLevel();
+        }
+        // foreach item update
+        // foreach NPC update 
+        // check for player death -- on death build RIP message
+    }
+
+
+    public override void Draw(IRenderWindow? disp) {
       // using custom RenderWindow, cast to my RenderWindow
       var tilesToDraw = new TileSet(_decor);
       tilesToDraw.IntersectWith(_discovered);
@@ -131,9 +147,25 @@ public class Level : Scene {
         }
     }
 
-   private void drawEnemies(IRenderWindow disp) { }
+    private void drawEnemies(IRenderWindow disp)
+    {
+        foreach (var enemy in _enemies)
+        {
+            if (enemy.IsAlive())
+            {
+                char symbol = enemy switch
+                {
+                    Goblin => 'G',
+                    Orc => 'O',
+                    Troll => 'T',
+                    _ => 'E'
+                };
+                disp.Draw(symbol, enemy.Pos, ConsoleColor.Red);
+            }
+        }
+    }
 
-   private void initMapTileSets(string map) {
+    private void initMapTileSets(string map) {
       var lines = map.Split('\n');
 
       // ------ rules for map ------
@@ -182,37 +214,113 @@ public class Level : Scene {
    private void registerCommandsWithScene() {
       RegisterCommand(ConsoleKey.UpArrow, "up");
       RegisterCommand(ConsoleKey.W, "up");
-      RegisterCommand(ConsoleKey.K, "up");
+      RegisterCommand(ConsoleKey.I, "up");
 
       RegisterCommand(ConsoleKey.DownArrow, "down");
       RegisterCommand(ConsoleKey.S, "down");
-      RegisterCommand(ConsoleKey.J, "down");
+      RegisterCommand(ConsoleKey.K, "down");
 
-      RegisterCommand(ConsoleKey.DownArrow, "left");
+      RegisterCommand(ConsoleKey.LeftArrow, "left");
       RegisterCommand(ConsoleKey.A, "left");
-      RegisterCommand(ConsoleKey.H, "left");
+      RegisterCommand(ConsoleKey.J, "left");
 
-      RegisterCommand(ConsoleKey.DownArrow, "right");
+      RegisterCommand(ConsoleKey.RightArrow, "right");
       RegisterCommand(ConsoleKey.D, "right");
       RegisterCommand(ConsoleKey.L, "right");
 
       RegisterCommand(ConsoleKey.Q, "quit");
    }
 
+    public void MovePlayer(Vector2 delta)
+    {
+        var newPos = _player!.Pos + delta;
 
-   public void MovePlayer(Vector2 delta) {
-      var newPos = _player!.Pos + delta;
+        // check if enemy is there first
+        foreach (var enemy in _enemies)
+        {
+            if (enemy.IsAlive() && enemy.Pos == newPos)
+            {
+                PerformCombat(enemy);
+                return;
+            }
+        }
 
-      if (_walkables.Contains(newPos)) {
-         var oldPos = _player!.Pos;
-         _player!.Pos = newPos;
-         _walkables.Remove(newPos); // new tile is now occupied
-         _walkables.Add(oldPos);    // old tile is now free
-         updateDiscovered();
-      }
-   }
+        if (_walkables.Contains(newPos))
+        {
+            var oldPos = _player!.Pos;
+            _player!.Pos = newPos;
+            _walkables.Remove(newPos);  // new tile is now occupied
+            _walkables.Add(oldPos);     // old tile is now free
+            updateDiscovered();
+        }
+    }
 
-   public void QuitLevel() {
+    private void PerformCombat(Enemy enemy)
+    {
+        if (!enemy.IsAlive())
+            return;
+
+        // --- Player attacks enemy ---
+        int damageToEnemy = _player.Attack - enemy.Defense;
+
+        if (damageToEnemy < 1)
+        {
+            damageToEnemy = 1; // always do at least 1 damage
+        }
+
+        enemy.Health -= damageToEnemy;
+
+        Console.WriteLine($"You hit the enemy for {damageToEnemy} damage!");
+
+        // --- Enemy attacks back if still alive ---
+        if (enemy.IsAlive())
+        {
+            int damageToPlayer = enemy.Attack - _player.Defense;
+
+            if (damageToPlayer < 1)
+            {
+                damageToPlayer = 1;
+            }
+
+            _player.Health -= damageToPlayer;
+
+            Console.WriteLine($"Enemy hits you for {damageToPlayer} damage!");
+        }
+        else
+        {
+            Console.WriteLine("Enemy defeated!");
+        }
+    }
+
+    private void spawnEnemies()
+    {
+        var rng = new Random();
+
+        for (int i = 0; i < 5; i++)
+        {
+            var pos = _floor.ElementAt(rng.Next(0, _floor.Count));
+
+            //avoid spawning on player
+            if (pos.X == _player.Pos.X && pos.Y == _player.Pos.Y)
+            {
+                i--;       // retry this iteration
+                continue;
+            }
+
+            int type = rng.Next(0, 3);
+
+            Enemy enemy = type switch
+            {
+                0 => new Goblin(pos.X, pos.Y),
+                1 => new Orc(pos.X, pos.Y),
+                _ => new Troll(pos.X, pos.Y)
+            };
+
+            _enemies.Add(enemy);
+        }
+    }
+
+    public void QuitLevel() {
       _levelActive = false;
    }
 }

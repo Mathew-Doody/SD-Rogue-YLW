@@ -16,8 +16,24 @@ public abstract class Player : IActor, IDrawable {
    protected int _maxHp  = 12;
    protected int _maxStr = 16;
    protected int _turn   = 0;
-   
-   public int Turn => _turn;
+
+    public virtual int Health
+    {
+        get => _hp;
+        set => _hp = value;
+    }
+
+    public virtual int Attack
+    {
+        get => _str;
+    }
+
+    public virtual int Defense
+    {
+        get => _arm;
+    }
+
+    public int Turn => _turn;
 
    public Player() {
       Name = "Rogue";
