@@ -200,19 +200,46 @@ public class Level : Scene {
    }
 
 
-   public void MovePlayer(Vector2 delta) {
-      var newPos = _player!.Pos + delta;
+   public void MovePlayer(Vector2 delta)
+{
+    var newPos = _player!.Pos + delta;
 
-      if (_walkables.Contains(newPos)) {
-         var oldPos = _player!.Pos;
-         _player!.Pos = newPos;
-         _walkables.Remove(newPos); // new tile is now occupied
-         _walkables.Add(oldPos);    // old tile is now free
-         updateDiscovered();
-      }
-   }
+    if (_walkables.Contains(newPos))
+    {
+        var oldPos = _player!.Pos;
+        _player!.Pos = newPos;
+        _walkables.Remove(newPos);
+        _walkables.Add(oldPos);
+        updateDiscovered();
+        
+        TryPickupItem();  
+    }
+}
 
    public void QuitLevel() {
       _levelActive = false;
    }
+}
+
+
+
+
+
+
+
+
+
+///i start here
+// Add this method
+private void TryPickupItem()
+{
+    for (int i = 0; i < _items.Count; i++)
+    {
+        if (_items[i].Position == _player!.Pos && !_items[i].IsPickedUp)
+        {
+            _player!.AddItem(_items[i]);
+            _items.RemoveAt(i);
+            break;
+        }
+    }
 }

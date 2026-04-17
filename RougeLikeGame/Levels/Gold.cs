@@ -15,3 +15,27 @@ namespace SandBox01.Levels
         }
     }
 }
+
+
+       
+       
+       
+
+
+
+
+       ////i start here
+       
+       
+          public override void Use(Player player)
+        {
+            
+            player.AddGold(Amount);
+            IsPickedUp = true;
+        }
+        
+        public override string GetDescription()
+        {
+            return $"{Amount} gold";
+        }
+    
