@@ -5,17 +5,17 @@ public static class DungeonConfig {
   public const int height = 25;
 
   // constants for drawing
-  const char block1 = '░';
-  const char block2 = '▒';
-  const char block3 = '▓';
-  const char block4 = '█';
-  const char block5 = '█';
-  const char vert   = '│';
-  const char hor    = '─';
-  const char tlc    = '┌';
-  const char trc    = '┐';
-  const char blc    = '└';
-  const char brc    = '┘';
+  public const char block1 = '░';
+  public const char block2 = '▒';
+  public const char block3 = '▓';
+  public const char block4 = '█';
+  public const char block5 = '█';
+  public const char vert   = '│';
+  public const char hor    = '─';
+  public const char tlc    = '┌';
+  public const char trc    = '┐';
+  public const char blc    = '└';
+  public const char brc    = '┘';
 
   //   String representation of a possible Dungeon layout.
   //   " " - solid stone, not walkable, not transparent.

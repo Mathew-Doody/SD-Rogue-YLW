@@ -5,13 +5,17 @@ using TileSet = System.Collections.Generic.HashSet<RogueLib.Utilities.Vector2>;
 
 namespace RlGameNS;
 
+using System;
 
-class Program {
 
-   static void Main(string[] args) {
-      Console.Clear();
-      Game game = new MyGame();
-      game.run();
-      
-   }
+class Program
+{
+
+    static void Main(string[] args)
+    {
+        Console.Clear();
+        Game game = new MyGame();
+        game.run();
+
+    }
 }

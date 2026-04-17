@@ -1,3 +1,4 @@
+using RogueLib;
 using RogueLib.Dungeon;
 using RogueLib.Engine;
 using RogueLib.Utilities;
@@ -17,7 +18,7 @@ public class MyGame : Game {
       
       _window       = new ScreenBuff();
       _player       = new Rogue();
-      _currentLevel = new Level(_player, map1, this);
+      _currentLevel = new Level(_player, new GeneratedLevel().ToString(), this);
       
    }
 
@@ -31,7 +32,7 @@ public class MyGame : Game {
    // string to use as the backgound on our first level
    // ----------------------------------------------------------------
 
-   public const string map1 =
+   public readonly string map1 =
       """
 
                ┌──────┐          ┌─────────────┐
