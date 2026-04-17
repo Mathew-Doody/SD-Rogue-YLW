@@ -168,13 +168,17 @@ public class Level : Scene
         {
             if (enemy.IsAlive())
             {
-                char symbol = enemy switch
-                {
-                    Goblin => 'G',
-                    Orc => 'O',
-                    Troll => 'T',
-                    _ => 'E'
-                };
+                char symbol;
+
+                if (enemy is Goblin)
+                    symbol = 'G';
+                else if (enemy is Orc)
+                    symbol = 'O';
+                else if (enemy is Troll)
+                    symbol = 'T';
+                else
+                    symbol = 'E';
+
                 disp.Draw(symbol, enemy.Pos, ConsoleColor.Red);
             }
         }
